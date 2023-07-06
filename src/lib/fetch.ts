@@ -1,5 +1,6 @@
-import { exit } from "process";
+import { Provider } from "zksync-web3";
 import { getConfig } from "./config";
+import { exit } from "process";
 // Newer or older than the ID of the from
 type Direction = "older" | "newer";
 type Limit = number;
@@ -66,9 +67,9 @@ export const fetchTransaction = async (
   direction: Direction
 ): Promise<TransactionList> => {
   const { provider } = await getConfig();
-  const transactionAddr = `${provider.address}/accounts/${accountIdOrAddress}/transactions?from=${from}&limit=${limit}&direction=${direction}`;
-  const { result } = await provider.get(transactionAddr);
-  return result as TransactionList;
+  // Use the getTransactions method of the Provider to fetch transactions
+  const transactions = await provider.getTransactions(accountIdOrAddress, from, limit, direction);
+  return transactions;
 };
 
 export const fetchAllTransactions = async (
