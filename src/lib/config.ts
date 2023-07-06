@@ -1,14 +1,14 @@
-import { RestProvider } from "zksync";
-import * as zksync from "zksync";
+import { Provider } from "zksync-web3";
 
 export interface Config {
-  provider: RestProvider;
+  provider: Provider;
 }
 
 let config: Config;
 export async function getConfig(): Promise<Config> {
   if (config === undefined) {
-    const provider = await zksync.getDefaultRestProvider("mainnet");
+    // Create a Provider for the zkSync Era network
+    const provider = new Provider("https://mainnet.era.zksync.io");
     config = { provider };
   }
   return config;
