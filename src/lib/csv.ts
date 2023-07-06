@@ -1,33 +1,3 @@
-import * as csv from "fast-csv";
-import { ethers } from "ethers";
-import { ExtendedTokens, TokenInfo } from "zksync/build/types";
-import { Transaction } from "./fetch";
-import { getConfig } from "./config";
-
-const padZero = (n: number): string => {
-  if (n < 10) return `0${n}`;
-  return `${n}`;
-};
-export const formatDate = (date: string): string => {
-  const d = new Date(date);
-  const mm = padZero(d.getMonth() + 1);
-  const dd = padZero(d.getDate());
-  const yyyy = d.getFullYear();
-  const HH = padZero(d.getHours());
-  const MM = padZero(d.getMinutes());
-  const SS = padZero(d.getSeconds());
-  return `${mm}/${dd}/${yyyy} ${HH}:${MM}:${SS}`;
-};
-
-export const getTokenById = (
-  tokenSet: ExtendedTokens,
-  tokenId: number
-): TokenInfo | undefined => {
-  const entry = Object.entries(tokenSet).find(
-    ([, tokenInfo]) => tokenInfo.id === tokenId
-  );
-  return (entry && entry[1]) || undefined;
-};
 // Takes the tx and the set of tokens and the account address to resolve
 // the transaction data.
 export const formatData = (
@@ -55,6 +25,9 @@ export const formatData = (
     rq = formattedValue;
     rc = symbol;
   }
+  // Add new fields for zkSync Era
+  const transactionType = tx.op.type; // Add the transaction type
+  const transactionStatus = tx.status; // Add the transaction status
   return {
     Date: formatDate(tx.createdAt),
     "Received Quantity": rq,
@@ -63,30 +36,8 @@ export const formatData = (
     "Sent Currency": sc,
     "Fee Amount": fee,
     "Fee Currency": feeCurrency,
+    "Transaction Type": transactionType, // Add the transaction type to the CSV
+    "Transaction Status": transactionStatus, // Add the transaction status to the CSV
     Tag: ""
   };
-};
-
-export const transformTransactions = async (
-  txs: Transaction[],
-  accountAddress: string
-): Promise<void> => {
-  const csvStream = csv.format({ headers: true });
-  csvStream.pipe(process.stdout).on("end", () => process.exit());
-  const config = await getConfig();
-  const tokenSet = await config.provider.getTokens();
-  txs.forEach((tx) => {
-    switch (tx.op.type) {
-    case "Transfer": {
-      const csvData = formatData(tx, tokenSet, accountAddress);
-      csvStream.write(csvData);
-      break;
-    }
-    default: {
-      // TODO atm only handling transfers;
-      break;
-    }
-    }
-  });
-  csvStream.end();
 };
